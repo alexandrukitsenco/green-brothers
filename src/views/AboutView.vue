@@ -66,12 +66,12 @@ const diaConTurnos = ref<DiaConTurnos>({
 
 const formatDate = (date: Date): string => {
   const offset = date.getTimezoneOffset()
-  const adjustedDate = new Date(date.getTime() - (offset * 60 * 1000))
+  const adjustedDate = new Date(date.getTime() - offset * 60 * 1000)
   return adjustedDate.toISOString().split('T')[0]
 }
 
 const fetchUsersForDate = async () => {
-  const selectedDate = date.value.toISOString().split('T')[0]
+  const selectedDate = formatDate(date.value)
   diaConTurnos.value.fecha = selectedDate
 
   console.log(selectedDate)
