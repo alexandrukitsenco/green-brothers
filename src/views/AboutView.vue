@@ -42,7 +42,9 @@ import DatePicker from 'primevue/datepicker'
 import Button from 'primevue/button'
 import Card from 'primevue/card'
 import PocketBase from 'pocketbase'
+import { useLoadingStore } from '../stores/loadingStore.ts'
 
+const loadingStore = useLoadingStore()
 const pb = new PocketBase('https://green-brothers.pockethost.io')
 
 type TurnoTipo = 'mañana' | 'tarde' | 'noche'
@@ -84,6 +86,7 @@ const formatDate = (date: Date): string => {
 }
 
 const fetchUsersForDate = async () => {
+  loadingStore.startLoading()
   const selectedDate = formatDate(date.value)
   diaConTurnos.value.fecha = selectedDate
 
@@ -115,6 +118,8 @@ const fetchUsersForDate = async () => {
     })
   } catch (error) {
     console.error('Error fetching users:', error)
+  } finally {
+    loadingStore.stopLoading()
   }
 }
 
