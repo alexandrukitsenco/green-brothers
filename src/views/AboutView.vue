@@ -6,17 +6,17 @@
       <template #header>
         <div class="bg-green-600 flex justify-between items-center p-3">
           <h2>Turno de {{ tipo }}</h2>
-          <Button> apuntate</Button>
+          <Button @click="apuntarseATurno(tipo)"> Apúntate</Button>
         </div>
       </template>
       <template #content>
         <div class="flex gap-3 flex-wrap">
-          <Card v-for="usuario in turno.usuarios" :key="usuario.nombre" class="w-28 user-card">
+          <Card v-for="usuario in turno.usuarios" :key="usuario.name" class="w-28 user-card">
             <template #header>
-              <img :src="usuario.fotoUrl" :alt="usuario.nombre" />
+              <img :src="usuario.avatar" :alt="usuario.name" />
             </template>
             <template #footer>
-              <h3 class="text-sm">{{ usuario.nombre }}</h3>
+              <h3 class="text-sm">{{ usuario.name }}</h3>
             </template>
           </Card>
         </div>
@@ -26,16 +26,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import DatePicker from 'primevue/datepicker'
 import Button from 'primevue/button'
 import Card from 'primevue/card'
+import PocketBase from 'pocketbase'
+
+const pb = new PocketBase('https://green-brothers.pockethost.io')
 
 type TurnoTipo = 'mañana' | 'tarde' | 'noche'
 
 interface Usuario {
-  nombre: string
-  fotoUrl: string
+  name: string
+  avatar: string
 }
 
 interface Turno {
@@ -52,59 +55,93 @@ interface DiaConTurnos {
 const date = ref(new Date())
 const minDate = ref(new Date())
 
-const diaConTurnos: DiaConTurnos = {
-  fecha: '2023-09-21',
+const diaConTurnos = ref<DiaConTurnos>({
+  fecha: '',
   turnos: {
-    mañana: {
-      usuarios: [
-        {
-          nombre: 'Juan Pérez',
-          fotoUrl:
-            'https://thumbs.dreamstime.com/b/l%C3%ADnea-icono-del-negro-avatar-perfil-de-usuario-121102131.jpg'
-        },
-        {
-          nombre: 'María García',
-          fotoUrl:
-            'https://thumbs.dreamstime.com/b/l%C3%ADnea-icono-del-negro-avatar-perfil-de-usuario-121102131.jpg'
-        }
-      ]
-    },
-    tarde: {
-      usuarios: [
-        {
-          nombre: 'Carlos Rodríguez',
-          fotoUrl:
-            'https://thumbs.dreamstime.com/b/l%C3%ADnea-icono-del-negro-avatar-perfil-de-usuario-121102131.jpg'
-        },
-        {
-          nombre: 'Ana Martínez',
-          fotoUrl:
-            'https://thumbs.dreamstime.com/b/l%C3%ADnea-icono-del-negro-avatar-perfil-de-usuario-121102131.jpg'
-        },
-        {
-          nombre: 'Luis Sánchez',
-          fotoUrl:
-            'https://thumbs.dreamstime.com/b/l%C3%ADnea-icono-del-negro-avatar-perfil-de-usuario-121102131.jpg'
-        }
-      ]
-    },
-    noche: {
-      usuarios: [
-        {
-          nombre: 'Laura Fernández',
-          fotoUrl:
-            'https://thumbs.dreamstime.com/b/l%C3%ADnea-icono-del-negro-avatar-perfil-de-usuario-121102131.jpg'
-        },
-        {
-          nombre: 'Pedro Gómez',
-          fotoUrl:
-            'https://thumbs.dreamstime.com/b/l%C3%ADnea-icono-del-negro-avatar-perfil-de-usuario-121102131.jpg'
-        }
-      ]
+    mañana: { usuarios: [] },
+    tarde: { usuarios: [] },
+    noche: { usuarios: [] }
+  }
+})
+
+const formatDate = (date: Date): string => {
+  const offset = date.getTimezoneOffset()
+  const adjustedDate = new Date(date.getTime() - offset * 60 * 1000)
+  return adjustedDate.toISOString().split('T')[0]
+}
+
+const fetchUsersForDate = async () => {
+  const selectedDate = formatDate(date.value)
+  diaConTurnos.value.fecha = selectedDate
+
+  console.log(selectedDate)
+
+  try {
+    const records = await pb.collection('user_workout_logs').getFullList({
+      filter: `date = "${selectedDate}"`,
+      expand: 'user'
+    })
+
+    // Reiniciar los usuarios para cada turno
+    diaConTurnos.value.turnos = {
+      mañana: { usuarios: [] },
+      tarde: { usuarios: [] },
+      noche: { usuarios: [] }
     }
+
+    records.forEach((record) => {
+      const usuario: Usuario = {
+        name: record.username,
+        avatar: record.userProfileImage
+          ? record.userProfileImage
+          : 'https://thumbs.dreamstime.com/b/l%C3%ADnea-icono-del-negro-avatar-perfil-de-usuario-121102131.jpg'
+      }
+      diaConTurnos.value.turnos[record.turno as TurnoTipo].usuarios.push(usuario)
+    })
+  } catch (error) {
+    console.error('Error fetching users:', error)
   }
 }
+
+const apuntarseATurno = async (turno: TurnoTipo) => {
+  if (!pb.authStore.isValid) {
+    alert('Por favor, inicia sesión para apuntarte a un turno.')
+    return
+  }
+
+  const selectedDate = formatDate(date.value)
+
+  const data = {
+    turno: turno,
+    date: selectedDate,
+    username: pb.authStore.model.username,
+    userProfileImage: pb.authStore.model.avatar
+      ? `https://green-brothers.pockethost.io/api/files/_pb_users_auth_/${pb.authStore.model.id}/${pb.authStore.model.avatar}`
+      : 'https://thumbs.dreamstime.com/b/l%C3%ADnea-icono-del-negro-avatar-perfil-de-usuario-121102131.jpg',
+    user_id: pb.authStore.model.id
+  }
+
+  try {
+    const record = await pb.collection('user_workout_logs').create(data)
+    console.log('Usuario apuntado:', record)
+
+    // Refrescar la lista de usuarios para el día seleccionado
+    await fetchUsersForDate()
+
+    alert('Te has apuntado correctamente al turno de ' + turno)
+  } catch (error) {
+    console.error('Error al apuntarse:', error)
+    alert('Error al apuntarse. Por favor, intenta de nuevo.')
+  }
+}
+
+onMounted(() => {
+  fetchUsersForDate()
+})
+
+watch(date, fetchUsersForDate)
 </script>
+
 <style>
 .user-card {
   @apply !bg-green-900 overflow-hidden rounded-md;

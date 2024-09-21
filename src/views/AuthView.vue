@@ -103,7 +103,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import InputText from 'primevue/inputtext'
 import Password from 'primevue/password'
 import Checkbox from 'primevue/checkbox'
@@ -126,6 +126,23 @@ const acceptTerms = ref(false)
 
 const router = useRouter()
 
+onMounted(() => {
+  // Comprobar si el usuario ya está autenticado
+  if (pb.authStore.isValid) {
+    // Si está autenticado, redirigir a '/about'
+    router.push('/about')
+  } else {
+    // Si hay un token en localStorage, intentar autenticar
+    const storedAuth = localStorage.getItem('pocketbase_auth')
+    if (storedAuth) {
+      pb.authStore.loadFromCookie(storedAuth)
+      if (pb.authStore.isValid) {
+        router.push('/about')
+      }
+    }
+  }
+})
+
 const toggleForm = () => {
   isLogin.value = !isLogin.value
 }
@@ -134,11 +151,8 @@ const login = async () => {
   try {
     await pb.collection('users').authWithPassword(email.value, password.value)
     if (rememberMe.value) {
-      // Si el usuario quiere ser recordado, puedes guardar el token de forma persistente
       localStorage.setItem('pocketbase_auth', pb.authStore.exportToCookie())
     }
-
-    // Redirigir al usuario a la página de inicio o dashboard
     router.push('/about')
   } catch (error) {
     console.error('Error al iniciar sesión:', error)
@@ -148,8 +162,7 @@ const login = async () => {
 
 const logout = () => {
   pb.authStore.clear()
-  // Aquí puedes manejar el estado de logout en tu aplicación
-  // Por ejemplo, redirigir al usuario a la página de inicio
+  localStorage.removeItem('pocketbase_auth')
   router.push('/')
 }
 
