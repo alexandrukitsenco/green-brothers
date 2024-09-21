@@ -51,6 +51,7 @@ interface Usuario {
   id: string
   name: string
   avatar: string
+  user_id: string
 }
 
 interface Turno {
