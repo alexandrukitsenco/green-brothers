@@ -11,12 +11,23 @@
       </template>
       <template #content>
         <div class="flex gap-3 flex-wrap">
-          <Card v-for="usuario in turno.usuarios" :key="usuario.name" class="w-28 user-card">
+          <Card v-for="usuario in turno.usuarios" :key="usuario.id" class="w-28 user-card">
             <template #header>
               <img :src="usuario.avatar" :alt="usuario.name" />
             </template>
             <template #footer>
-              <h3 class="text-sm">{{ usuario.name }}</h3>
+              <div class="flex justify-between items-center">
+                <h3 class="text-sm">{{ usuario.name }}</h3>
+                <Button
+                  v-if="isCurrentUser(usuario.user_id)"
+                  icon="pi pi-times"
+                  severity="danger"
+                  text
+                  rounded
+                  aria-label="Cancel"
+                  @click="borrarRegistro(usuario.id, tipo)"
+                />
+              </div>
             </template>
           </Card>
         </div>
@@ -37,6 +48,7 @@ const pb = new PocketBase('https://green-brothers.pockethost.io')
 type TurnoTipo = 'mañana' | 'tarde' | 'noche'
 
 interface Usuario {
+  id: string
   name: string
   avatar: string
 }
@@ -91,6 +103,8 @@ const fetchUsersForDate = async () => {
 
     records.forEach((record) => {
       const usuario: Usuario = {
+        id: record.id,
+        user_id: record.user_id,
         name: record.username,
         avatar: record.userProfileImage
           ? record.userProfileImage
@@ -131,6 +145,29 @@ const apuntarseATurno = async (turno: TurnoTipo) => {
   } catch (error) {
     console.error('Error al apuntarse:', error)
     alert('Error al apuntarse. Por favor, intenta de nuevo.')
+  }
+}
+
+const isCurrentUser = (userId: string): boolean => {
+  return pb.authStore.model?.id === userId
+}
+
+const borrarRegistro = async (recordId: string, turno: TurnoTipo) => {
+  if (!confirm('¿Estás seguro de que quieres borrar este registro?')) {
+    return
+  }
+
+  try {
+    await pb.collection('user_workout_logs').delete(recordId)
+    console.log('Registro borrado:', recordId)
+
+    // Actualizar la lista de usuarios
+    await fetchUsersForDate()
+
+    alert('Registro borrado correctamente')
+  } catch (error) {
+    console.error('Error al borrar el registro:', error)
+    alert('Error al borrar el registro. Por favor, intenta de nuevo.')
   }
 }
 
