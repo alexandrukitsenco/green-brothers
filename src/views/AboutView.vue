@@ -71,7 +71,36 @@ const formatDate = (date: Date): string => {
 }
 
 const fetchUsersForDate = async () => {
-  // ... (esta función permanece igual)
+  const selectedDate = date.value.toISOString().split('T')[0]
+  diaConTurnos.value.fecha = selectedDate
+
+  console.log(selectedDate)
+
+  try {
+    const records = await pb.collection('user_workout_logs').getFullList({
+      filter: `date = "${selectedDate}"`,
+      expand: 'user'
+    })
+
+    // Reiniciar los usuarios para cada turno
+    diaConTurnos.value.turnos = {
+      mañana: { usuarios: [] },
+      tarde: { usuarios: [] },
+      noche: { usuarios: [] }
+    }
+
+    records.forEach((record) => {
+      const usuario: Usuario = {
+        name: record.username,
+        avatar: record.userProfileImage
+          ? record.userProfileImage
+          : 'https://thumbs.dreamstime.com/b/l%C3%ADnea-icono-del-negro-avatar-perfil-de-usuario-121102131.jpg'
+      }
+      diaConTurnos.value.turnos[record.turno as TurnoTipo].usuarios.push(usuario)
+    })
+  } catch (error) {
+    console.error('Error fetching users:', error)
+  }
 }
 
 const apuntarseATurno = async (turno: TurnoTipo) => {
