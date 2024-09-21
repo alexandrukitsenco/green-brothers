@@ -42,7 +42,7 @@ import DatePicker from 'primevue/datepicker'
 import Button from 'primevue/button'
 import Card from 'primevue/card'
 import PocketBase from 'pocketbase'
-import { useLoadingStore } from '../stores/loadingStore.ts'
+import { useLoadingStore } from '../stores/loadingStore'
 
 const loadingStore = useLoadingStore()
 const pb = new PocketBase('https://green-brothers.pockethost.io')
