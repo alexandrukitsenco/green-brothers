@@ -132,16 +132,7 @@ const toggleForm = () => {
 
 const login = async () => {
   try {
-    const authData = await pb.collection('users').authWithPassword(email.value, password.value)
-
-    console.log('Login exitoso', authData)
-    console.log('Auth válida:', pb.authStore.isValid)
-    console.log('Token:', pb.authStore.token)
-    console.log('ID de usuario:', pb.authStore.model.id)
-
-    // Aquí puedes manejar el estado de autenticación en tu aplicación
-    // Por ejemplo, podrías guardar el token en el localStorage o en un estado global
-
+    await pb.collection('users').authWithPassword(email.value, password.value)
     if (rememberMe.value) {
       // Si el usuario quiere ser recordado, puedes guardar el token de forma persistente
       localStorage.setItem('pocketbase_auth', pb.authStore.exportToCookie())
