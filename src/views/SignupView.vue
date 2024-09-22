@@ -1,58 +1,55 @@
 <template>
-  <div class="p-4">
+  <div class="p-4 flex flex-col gap-8">
     <h5 class="text-center mb-5">Registrarse</h5>
-    <div class="mb-3">
-      <span class="p-float-label">
-        <InputText id="name" v-model="name" class="w-full" />
-        <label for="name">Apodo</label>
-      </span>
+    <FloatLabel>
+      <InputText id="name" v-model="name" class="w-full" />
+      <label for="name">Apodo</label>
+    </FloatLabel>
+    <FloatLabel>
+      <InputText id="emailSignup" v-model="emailSignup" class="w-full" />
+      <label for="emailSignup">Correo electrónico</label>
+    </FloatLabel>
+    <FloatLabel>
+      <Password
+        id="passwordSignup"
+        v-model="passwordSignup"
+        class="w-full"
+        inputClass="w-full"
+        :toggleMask="true"
+      />
+      <label for="passwordSignup">Contraseña</label>
+    </FloatLabel>
+    <FloatLabel>
+      <Password
+        id="confirmPassword"
+        v-model="confirmPassword"
+        class="w-full"
+        inputClass="w-full"
+        :feedback="false"
+        :toggleMask="true"
+      />
+      <label for="confirmPassword">Confirmar contraseña</label>
+    </FloatLabel>
+    <div class="flex items-center gap-1 text-sm">
+      <Checkbox id="acceptTerms" v-model="acceptTerms" :binary="true" class="mr-2" />
+      <label for="acceptTerms">Acepto los términos y condiciones</label>
     </div>
-    <div class="mb-3">
-      <span class="p-float-label">
-        <InputText id="emailSignup" v-model="emailSignup" class="w-full" />
-        <label for="emailSignup">Correo electrónico</label>
-      </span>
-    </div>
-    <div class="mb-3">
-      <span class="p-float-label">
-        <Password
-          id="passwordSignup"
-          v-model="passwordSignup"
-          class="w-full"
-          inputClass="w-full"
-          :toggleMask="true"
-        />
-        <label for="passwordSignup">Contraseña</label>
-      </span>
-    </div>
-    <div class="mb-3">
-      <span class="p-float-label">
-        <Password
-          id="confirmPassword"
-          v-model="confirmPassword"
-          class="w-full"
-          inputClass="w-full"
-          :feedback="false"
-          :toggleMask="true"
-        />
-        <label for="confirmPassword">Confirmar contraseña</label>
-      </span>
-    </div>
-    <div class="flex align-items-center justify-content-between mb-5">
-      <div class="flex align-items-center">
-        <Checkbox id="acceptTerms" v-model="acceptTerms" :binary="true" class="mr-2" />
-        <label for="acceptTerms">Acepto los términos y condiciones</label>
+    <div>
+      <Button
+        label="Registrarse"
+        class="w-full"
+        @click="signup"
+        :loading="loadingStore.isLoading"
+      />
+      <div class="text-center mt-3">
+        <router-link
+          :to="{ name: 'login' }"
+          class="font-medium no-underline cursor-pointer"
+          style="color: var(--primary-color)"
+        >
+          ¿Ya tienes una cuenta? Inicia sesión
+        </router-link>
       </div>
-    </div>
-    <Button label="Registrarse" class="w-full" @click="signup" :loading="loadingStore.isLoading" />
-    <div class="text-center mt-5">
-      <router-link
-        :to="{ name: 'login' }"
-        class="font-medium no-underline cursor-pointer"
-        style="color: var(--primary-color)"
-      >
-        ¿Ya tienes una cuenta? Inicia sesión
-      </router-link>
     </div>
   </div>
 </template>
@@ -63,6 +60,7 @@ import InputText from 'primevue/inputtext'
 import Password from 'primevue/password'
 import Checkbox from 'primevue/checkbox'
 import Button from 'primevue/button'
+import FloatLabel from 'primevue/floatlabel'
 import { useRouter } from 'vue-router'
 import PocketBase from 'pocketbase'
 import { ClientResponseError } from 'pocketbase'
