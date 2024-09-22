@@ -1,6 +1,6 @@
 <template>
   <div class="layout-wrapper">
-    <Toolbar class="fixed top-0 left-0 w-full z-50 shadow-md !rounded-none">
+    <Toolbar class="fixed top-0 left-0 w-full z-10 shadow-md !rounded-none">
       <template #start>
         <span class="text-xl font-bold text-green-700">GreenBrothers</span>
       </template>

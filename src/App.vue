@@ -9,7 +9,7 @@ import Toast from 'primevue/toast'
     <RouterView />
     <Toast position="bottom-left" />
   </div>
-  <LoadingOverlay />
+  <LoadingOverlay class="z-50" />
 </template>
 <style>
 .p-toast {
