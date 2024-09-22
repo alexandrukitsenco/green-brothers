@@ -7,12 +7,12 @@ import Toast from 'primevue/toast'
 <template>
   <div class="container mx-auto px-4">
     <RouterView />
-    <Toast />
+    <Toast position="bottom-left" />
   </div>
   <LoadingOverlay />
 </template>
 <style>
 .p-toast {
-  @apply !w-full !p-4 !top-0 !right-0;
+  @apply !w-full !p-4 !bottom-0 !left-0;
 }
 </style>

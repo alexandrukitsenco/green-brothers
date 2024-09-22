@@ -1,39 +1,40 @@
 <template>
-  <div class="flex flex-col gap-4 mt-16">
-    <h1>Hola mon</h1>
-    <DatePicker v-model="date" :minDate="minDate" />
-    <Card v-for="(turno, tipo) in diaConTurnos.turnos" :key="tipo">
-      <template #header>
-        <div class="bg-green-600 flex justify-between items-center p-3">
-          <h2>Turno de {{ tipo }}</h2>
-          <Button @click="apuntarseATurno(tipo)"> Apúntate</Button>
-        </div>
-      </template>
-      <template #content>
-        <div class="flex gap-3 flex-wrap">
-          <Card v-for="usuario in turno.usuarios" :key="usuario.id" class="w-28 user-card">
-            <template #header>
-              <img :src="usuario.avatar" :alt="usuario.name" />
-            </template>
-            <template #footer>
-              <div class="flex justify-between items-center">
-                <h3 class="text-sm">{{ usuario.name }}</h3>
-                <Button
-                  v-if="isCurrentUser(usuario.user_id)"
-                  icon="pi pi-times"
-                  severity="danger"
-                  text
-                  rounded
-                  aria-label="Cancel"
-                  @click="borrarRegistro(usuario.id, tipo)"
-                />
-              </div>
-            </template>
-          </Card>
-        </div>
-      </template>
-    </Card>
-  </div>
+  <AppLayout>
+    <div class="flex flex-col gap-4 p-4">
+      <DatePicker v-model="date" :minDate="minDate" />
+      <Card v-for="(turno, tipo) in diaConTurnos.turnos" :key="tipo">
+        <template #header>
+          <div class="bg-green-600 flex justify-between items-center p-3">
+            <h2>Turno de {{ tipo }}</h2>
+            <Button @click="apuntarseATurno(tipo)"> Apúntate</Button>
+          </div>
+        </template>
+        <template #content>
+          <div class="flex gap-3 flex-wrap">
+            <Card v-for="usuario in turno.usuarios" :key="usuario.id" class="w-28 user-card">
+              <template #header>
+                <img :src="usuario.avatar" :alt="usuario.name" />
+              </template>
+              <template #footer>
+                <div class="flex justify-between items-center">
+                  <h3 class="text-sm">{{ usuario.name }}</h3>
+                  <Button
+                    v-if="isCurrentUser(usuario.user_id)"
+                    icon="pi pi-times"
+                    severity="danger"
+                    text
+                    rounded
+                    aria-label="Cancel"
+                    @click="borrarRegistro(usuario.id, tipo)"
+                  />
+                </div>
+              </template>
+            </Card>
+          </div>
+        </template>
+      </Card>
+    </div>
+  </AppLayout>
 </template>
 
 <script setup lang="ts">
@@ -44,6 +45,7 @@ import Card from 'primevue/card'
 import PocketBase from 'pocketbase'
 import { useLoadingStore } from '../stores/loadingStore'
 import { useToast } from 'primevue/usetoast'
+import AppLayout from './AppLayout.vue'
 
 const toast = useToast()
 const loadingStore = useLoadingStore()

@@ -1,4 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import PocketBase from 'pocketbase'
+
+const pb = new PocketBase('https://green-brothers.pockethost.io')
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -27,9 +30,19 @@ const router = createRouter({
     {
       path: '/home',
       name: 'home',
-      component: () => import('../views/HomeView.vue')
+      component: () => import('../views/HomeView.vue'),
+      meta: { requiresAuth: true }
     }
   ]
+})
+
+router.beforeEach((to, from, next) => {
+  console.log(pb)
+  if (to.meta.requiresAuth && !pb.authStore.isValid) {
+    next({ name: 'login' })
+  } else {
+    next()
+  }
 })
 
 export default router
