@@ -13,6 +13,6 @@ import Toast from 'primevue/toast'
 </template>
 <style>
 .p-toast {
-  @apply !w-full !p-4 !bottom-0 !left-0;
+  @apply !w-full !p-4 !bottom-0 !left-0 !z-40;
 }
 </style>

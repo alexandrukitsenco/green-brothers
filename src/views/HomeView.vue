@@ -94,8 +94,6 @@ const fetchUsersForDate = async () => {
   const selectedDate = formatDate(date.value)
   diaConTurnos.value.fecha = selectedDate
 
-  console.log(selectedDate)
-
   try {
     const records = await pb.collection('user_workout_logs').getFullList({
       filter: `date = "${selectedDate}"`,
@@ -158,7 +156,6 @@ const apuntarseATurno = async (turno: TurnoTipo) => {
 
   try {
     const record = await pb.collection('user_workout_logs').create(data)
-    console.log('Usuario apuntado:', record)
 
     await fetchUsersForDate()
 
@@ -193,7 +190,6 @@ const borrarRegistro = async (recordId: string, turno: TurnoTipo) => {
   loadingStore.startLoading()
   try {
     await pb.collection('user_workout_logs').delete(recordId)
-    console.log('Registro borrado:', recordId)
 
     await fetchUsersForDate()
 
