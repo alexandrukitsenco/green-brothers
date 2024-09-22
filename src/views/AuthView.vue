@@ -20,6 +20,7 @@
                   class="w-full"
                   inputClass="w-full"
                   :feedback="false"
+                  :toggleMask="true"
                 />
                 <label for="password">Contraseña</label>
               </span>
@@ -35,14 +36,19 @@
                 >¿Olvidaste tu contraseña?</a
               >
             </div>
-            <Button label="Iniciar sesión" class="w-full" @click="login" />
+            <Button
+              label="Iniciar sesión"
+              class="w-full"
+              @click="login"
+              :loading="loadingStore.isLoading"
+            />
           </div>
 
           <div v-else>
             <div class="mb-3">
               <span class="p-float-label">
                 <InputText id="name" v-model="name" class="w-full" />
-                <label for="name">Nombre completo</label>
+                <label for="name">Apodo</label>
               </span>
             </div>
             <div class="mb-3">
@@ -58,6 +64,7 @@
                   v-model="passwordSignup"
                   class="w-full"
                   inputClass="w-full"
+                  :toggleMask="true"
                 />
                 <label for="passwordSignup">Contraseña</label>
               </span>
@@ -70,6 +77,7 @@
                   class="w-full"
                   inputClass="w-full"
                   :feedback="false"
+                  :toggleMask="true"
                 />
                 <label for="confirmPassword">Confirmar contraseña</label>
               </span>
@@ -80,7 +88,12 @@
                 <label for="acceptTerms">Acepto los términos y condiciones</label>
               </div>
             </div>
-            <Button label="Registrarse" class="w-full" @click="signup" />
+            <Button
+              label="Registrarse"
+              class="w-full"
+              @click="signup"
+              :loading="loadingStore.isLoading"
+            />
           </div>
 
           <div class="text-center mt-5">
@@ -111,8 +124,13 @@ import Button from 'primevue/button'
 import Card from 'primevue/card'
 import { useRouter } from 'vue-router'
 import PocketBase from 'pocketbase'
+import { ClientResponseError } from 'pocketbase'
+import { useLoadingStore } from '../stores/loadingStore'
+import { useToast } from 'primevue/usetoast'
 
 const pb = new PocketBase('https://green-brothers.pockethost.io')
+const loadingStore = useLoadingStore()
+const toast = useToast()
 
 const isLogin = ref(true)
 const email = ref('')
@@ -127,17 +145,14 @@ const acceptTerms = ref(false)
 const router = useRouter()
 
 onMounted(() => {
-  // Comprobar si el usuario ya está autenticado
   if (pb.authStore.isValid) {
-    // Si está autenticado, redirigir a '/about'
-    router.push('/about')
+    router.push('/home')
   } else {
-    // Si hay un token en localStorage, intentar autenticar
     const storedAuth = localStorage.getItem('pocketbase_auth')
     if (storedAuth) {
       pb.authStore.loadFromCookie(storedAuth)
       if (pb.authStore.isValid) {
-        router.push('/about')
+        router.push('/home')
       }
     }
   }
@@ -148,25 +163,44 @@ const toggleForm = () => {
 }
 
 const login = async () => {
+  loadingStore.startLoading()
   try {
     await pb.collection('users').authWithPassword(email.value, password.value)
     if (rememberMe.value) {
       localStorage.setItem('pocketbase_auth', pb.authStore.exportToCookie())
     }
-    router.push('/about')
+    toast.add({
+      severity: 'success',
+      summary: 'Éxito',
+      detail: 'Inicio de sesión exitoso',
+      life: 3000
+    })
+    router.push('/home')
   } catch (error) {
     console.error('Error al iniciar sesión:', error)
-    alert('Error al iniciar sesión. Por favor, verifica tus credenciales.')
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'Error al iniciar sesión. Por favor, verifica tus credenciales.',
+      life: 3000
+    })
+  } finally {
+    loadingStore.stopLoading()
   }
 }
 
-const logout = () => {
-  pb.authStore.clear()
-  localStorage.removeItem('pocketbase_auth')
-  router.push('/')
-}
-
 const signup = async () => {
+  if (!acceptTerms.value) {
+    toast.add({
+      severity: 'warn',
+      summary: 'Advertencia',
+      detail: 'Debes aceptar los términos y condiciones para registrarte.',
+      life: 3000
+    })
+    return
+  }
+
+  loadingStore.startLoading()
   try {
     const data = {
       username: name.value,
@@ -177,16 +211,44 @@ const signup = async () => {
       name: name.value
     }
 
-    const record = await pb.collection('users').create(data)
-    console.log('Usuario registrado:', record)
+    await pb.collection('users').create(data)
 
-    await pb.collection('users').requestVerification(emailSignup.value)
-
-    alert('Registro exitoso. Por favor, verifica tu correo electrónico.')
+    toast.add({
+      severity: 'success',
+      summary: 'Éxito',
+      detail: 'Registro exitoso. Por favor, verifica tu correo electrónico.',
+      life: 3000
+    })
     isLogin.value = true
   } catch (error) {
-    console.error('Error al registrar:', error)
-    alert('Error al registrar. Por favor, intenta de nuevo.')
+    if (error instanceof ClientResponseError) {
+      let errorMessage = 'Error al registrar:\n'
+      const errorData = error.data.data
+      if (errorData.email) {
+        errorMessage += `- Email: ${errorData.email.message}\n`
+      }
+      if (errorData.password) {
+        errorMessage += `- Contraseña: ${errorData.password.message}\n`
+      }
+      if (errorData.username) {
+        errorMessage += `- Apodo: ${errorData.username.message}\n`
+      }
+      toast.add({
+        severity: 'error',
+        summary: 'Error de registro',
+        detail: errorMessage,
+        life: 5000
+      })
+    } else {
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Error al registrar. Por favor, intenta de nuevo.',
+        life: 3000
+      })
+    }
+  } finally {
+    loadingStore.stopLoading()
   }
 }
 </script>

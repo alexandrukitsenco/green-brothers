@@ -43,7 +43,9 @@ import Button from 'primevue/button'
 import Card from 'primevue/card'
 import PocketBase from 'pocketbase'
 import { useLoadingStore } from '../stores/loadingStore'
+import { useToast } from 'primevue/usetoast'
 
+const toast = useToast()
 const loadingStore = useLoadingStore()
 const pb = new PocketBase('https://green-brothers.pockethost.io')
 
@@ -98,7 +100,6 @@ const fetchUsersForDate = async () => {
       expand: 'user'
     })
 
-    // Reiniciar los usuarios para cada turno
     diaConTurnos.value.turnos = {
       mañana: { usuarios: [] },
       tarde: { usuarios: [] },
@@ -118,6 +119,12 @@ const fetchUsersForDate = async () => {
     })
   } catch (error) {
     console.error('Error fetching users:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'Error al cargar los usuarios',
+      life: 3000
+    })
   } finally {
     loadingStore.stopLoading()
   }
@@ -125,10 +132,16 @@ const fetchUsersForDate = async () => {
 
 const apuntarseATurno = async (turno: TurnoTipo) => {
   if (!pb.authStore.isValid || !pb.authStore.model) {
-    alert('Por favor, inicia sesión para apuntarte a un turno.')
+    toast.add({
+      severity: 'warn',
+      summary: 'Advertencia',
+      detail: 'Por favor, inicia sesión para apuntarte a un turno.',
+      life: 3000
+    })
     return
   }
 
+  loadingStore.startLoading()
   const selectedDate = formatDate(date.value)
 
   const data = {
@@ -147,10 +160,22 @@ const apuntarseATurno = async (turno: TurnoTipo) => {
 
     await fetchUsersForDate()
 
-    alert('Te has apuntado correctamente al turno de ' + turno)
+    toast.add({
+      severity: 'success',
+      summary: 'Éxito',
+      detail: `Te has apuntado correctamente al turno de ${turno}`,
+      life: 3000
+    })
   } catch (error) {
     console.error('Error al apuntarse:', error)
-    alert('Error al apuntarse. Por favor, intenta de nuevo.')
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'Error al apuntarse. Por favor, intenta de nuevo.',
+      life: 3000
+    })
+  } finally {
+    loadingStore.stopLoading()
   }
 }
 
@@ -163,17 +188,29 @@ const borrarRegistro = async (recordId: string, turno: TurnoTipo) => {
     return
   }
 
+  loadingStore.startLoading()
   try {
     await pb.collection('user_workout_logs').delete(recordId)
     console.log('Registro borrado:', recordId)
 
-    // Actualizar la lista de usuarios
     await fetchUsersForDate()
 
-    alert('Registro borrado correctamente')
+    toast.add({
+      severity: 'success',
+      summary: 'Éxito',
+      detail: 'Registro borrado correctamente',
+      life: 3000
+    })
   } catch (error) {
     console.error('Error al borrar el registro:', error)
-    alert('Error al borrar el registro. Por favor, intenta de nuevo.')
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'Error al borrar el registro. Por favor, intenta de nuevo.',
+      life: 3000
+    })
+  } finally {
+    loadingStore.stopLoading()
   }
 }
 
