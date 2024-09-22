@@ -1,8 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import PocketBase from 'pocketbase'
 
-const pb = new PocketBase('https://green-brothers.pockethost.io')
-
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -37,7 +35,7 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  console.log(pb)
+  const pb = new PocketBase('https://green-brothers.pockethost.io')
   if (to.meta.requiresAuth && !pb.authStore.isValid) {
     next({ name: 'login' })
   } else {
